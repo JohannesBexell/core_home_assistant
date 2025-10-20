@@ -111,6 +111,7 @@ HANDLERS: Registry[
 ] = Registry()
 
 ALEXA_THERMOSTAT_CONTROLLER = "Alexa.ThermostatController"
+ALEXA_SECURITY_PANEL_CONTROLLER = "Alexa.SecurityPanelController"
 
 
 @HANDLERS.register(("Alexa.Discovery", "Discover"))
@@ -1130,13 +1131,13 @@ async def async_api_arm(
     payload: dict[str, Any] = {"exitDelayInSeconds": 0}
 
     response = directive.response(
-        name="Arm.Response", namespace="Alexa.SecurityPanelController", payload=payload
+        name="Arm.Response", namespace=ALEXA_SECURITY_PANEL_CONTROLLER, payload=payload
     )
 
     response.add_context_property(
         {
             "name": "armState",
-            "namespace": "Alexa.SecurityPanelController",
+            "namespace": ALEXA_SECURITY_PANEL_CONTROLLER,
             "value": arm_state,
         }
     )
@@ -1175,7 +1176,7 @@ async def async_api_disarm(
     response.add_context_property(
         {
             "name": "armState",
-            "namespace": "Alexa.SecurityPanelController",
+            "namespace": ALEXA_SECURITY_PANEL_CONTROLLER,
             "value": "DISARMED",
         }
     )
