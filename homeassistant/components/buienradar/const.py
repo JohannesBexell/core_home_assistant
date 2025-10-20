@@ -21,6 +21,7 @@ SCHEDULE_NOK = 2
 
 STATE_CONDITIONS = ["clear", "cloudy", "fog", "rainy", "snowy", "lightning"]
 
+
 STATE_DETAILED_CONDITIONS = [
     "clear",
     "partlycloudy",
@@ -64,3 +65,12 @@ STATE_CONDITION_CODES = [
     "g",
     "s",
 ]
+
+UNIT_BFT = "Bft"
+
+ICON_GAUGE = "mdi:gauge"
+ICON_WATER_PERCENT = "mdi:water-percent"
+ICON_WEATHER_WINDY = "mdi:weather-windy"
+ICON_COMPASS_OUTLINE = "mdi:compass-outline"
+ICON_WEATHER_POURING = "mdi:weather-pouring"
+ICON_WEATHER_PARTLY_CLOUDY = "mdi:weather-partly-cloudy"
