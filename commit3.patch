@@ -1,0 +1,78 @@
+commit 336587a8887a84420f0b1b031e283e531b4a162b
+Author: surfknasen <casper.christiansson@gmail.com>
+Date:   Mon Oct 20 12:46:26 2025 +0000
+
+    shortened validate function
+
+diff --git a/homeassistant/components/assist_pipeline/pipeline.py b/homeassistant/components/assist_pipeline/pipeline.py
+index d7abb7f6ceb..29d163db577 100644
+--- a/homeassistant/components/assist_pipeline/pipeline.py
++++ b/homeassistant/components/assist_pipeline/pipeline.py
+@@ -1775,6 +1775,7 @@ class PipelineInput:
+ 
+     async def validate(self) -> None:
+         """Validate pipeline input against start stage."""
++        # Validate stage-specific requirements
+         if self.run.start_stage in (PipelineStage.WAKE_WORD, PipelineStage.STT):
+             if self.run.pipeline.stt_engine is None:
+                 raise PipelineRunValidationError(
+@@ -1798,44 +1799,37 @@ class PipelineInput:
+                 raise PipelineRunValidationError(
+                     "tts_input is required for text-to-speech"
+                 )
++
+         if self.run.end_stage == PipelineStage.TTS:
+             if self.run.pipeline.tts_engine is None:
+                 raise PipelineRunValidationError(
+                     "the pipeline does not support text-to-speech"
+                 )
+ 
+-        start_stage_index = PIPELINE_STAGE_ORDER.index(self.run.start_stage)
+-        end_stage_index = PIPELINE_STAGE_ORDER.index(self.run.end_stage)
++        # Prepare stages
++        await self._prepare_stages()
++
++    async def _prepare_stages(self) -> None:
++        """Prepare all stages that fall within the start and end range."""
++        start_idx = PIPELINE_STAGE_ORDER.index(self.run.start_stage)
++        end_idx = PIPELINE_STAGE_ORDER.index(self.run.end_stage)
++
++        def in_range(stage: PipelineStage) -> bool:
++            return start_idx <= PIPELINE_STAGE_ORDER.index(stage) <= end_idx
+ 
+         prepare_tasks = []
+ 
+-        if (
+-            start_stage_index
+-            <= PIPELINE_STAGE_ORDER.index(PipelineStage.WAKE_WORD)
+-            <= end_stage_index
+-        ):
++        if in_range(PipelineStage.WAKE_WORD):
+             prepare_tasks.append(self.run.prepare_wake_word_detection())
+ 
+-        if (
+-            start_stage_index
+-            <= PIPELINE_STAGE_ORDER.index(PipelineStage.STT)
+-            <= end_stage_index
+-        ):
++        if in_range(PipelineStage.STT):
+             # self.stt_metadata can't be None or we'd raise above
+             prepare_tasks.append(self.run.prepare_speech_to_text(self.stt_metadata))  # type: ignore[arg-type]
+ 
+-        if (
+-            start_stage_index
+-            <= PIPELINE_STAGE_ORDER.index(PipelineStage.INTENT)
+-            <= end_stage_index
+-        ):
++        if in_range(PipelineStage.INTENT):
+             prepare_tasks.append(self.run.prepare_recognize_intent(self.session))
+ 
+-        if (
+-            start_stage_index
+-            <= PIPELINE_STAGE_ORDER.index(PipelineStage.TTS)
+-            <= end_stage_index
+-        ):
++        if in_range(PipelineStage.TTS):
+             prepare_tasks.append(self.run.prepare_text_to_speech())
+ 
+         if prepare_tasks:
