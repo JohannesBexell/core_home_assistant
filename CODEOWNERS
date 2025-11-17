@@ -1706,6 +1706,8 @@ build.json @home-assistant/supervisor
 /tests/components/vizio/ @raman325
 /homeassistant/components/vlc_telnet/ @rodripf @MartinHjelmare
 /tests/components/vlc_telnet/ @rodripf @MartinHjelmare
+/homeassistant/components/vma_govee/ @surfknasen
+/tests/components/vma_govee/ @surfknasen
 /homeassistant/components/vodafone_station/ @paoloantinori @chemelli74
 /tests/components/vodafone_station/ @paoloantinori @chemelli74
 /homeassistant/components/voip/ @synesthesiam @jaminh

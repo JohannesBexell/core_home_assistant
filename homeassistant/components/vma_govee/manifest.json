@@ -1,0 +1,10 @@
+{
+  "domain": "vma_govee",
+  "name": "Govee VMA",
+  "codeowners": ["@surfknasen"],
+  "config_flow": true,
+  "documentation": "https://www.home-assistant.io/integrations/vma_govee",
+  "iot_class": "cloud_polling",
+  "quality_scale": "bronze",
+  "requirements": []
+}

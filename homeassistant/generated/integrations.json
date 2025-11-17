@@ -7276,6 +7276,12 @@
         }
       }
     },
+    "vma_govee": {
+      "name": "Govee VMA",
+      "integration_type": "hub",
+      "config_flow": true,
+      "iot_class": "cloud_polling"
+    },
     "vodafone_station": {
       "name": "Vodafone Station",
       "integration_type": "hub",
