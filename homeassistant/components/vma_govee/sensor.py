@@ -10,8 +10,6 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .const import DOMAIN
-
 _LOGGER = logging.getLogger(__name__)
 
 
@@ -22,7 +20,7 @@ async def async_setup_entry(
 ) -> None:
     """Set up Govee VMA sensor."""
     _LOGGER.warning("Setting up VMA sensor - START")
-    coordinator = hass.data[DOMAIN][entry.entry_id]
+    coordinator = entry.runtime_data
     _LOGGER.warning("Coordinator data: %s", coordinator.data)
     async_add_entities([GoveeVMASensor(coordinator)])
     _LOGGER.warning("Setting up VMA sensor - COMPLETE")
