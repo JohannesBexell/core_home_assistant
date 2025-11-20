@@ -17,6 +17,7 @@ from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, Upda
 
 from .api import GoveeVmaApiClient
 from .const import DOMAIN
+from .light_controller import LightController, PatternStep
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -34,10 +35,12 @@ class GoveeVmaCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         hass: HomeAssistant,
         config_entry: GoveeVmaConfigEntry,
         api_client: GoveeVmaApiClient,
+        light_controller: LightController,
         update_interval: timedelta,
     ) -> None:
         """Initialize."""
         self.api_client = api_client
+        self.light_controller = light_controller
         self.device_info = DeviceInfo(
             entry_type=DeviceEntryType.SERVICE,
             identifiers={(DOMAIN, config_entry.entry_id)},
@@ -60,7 +63,10 @@ class GoveeVmaCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         try:
             async with timeout(10):
                 data = await self.api_client.async_get_vma_data()
-                self._send_notification(data)
+                await self._process_vma_data(data)
+                await self._send_persistent_notification(
+                    "Govee VMA data updated successfully.", "Govee VMA"
+                )
         except EXCEPTIONS as error:
             raise UpdateFailed(
                 translation_domain=DOMAIN,
@@ -70,6 +76,23 @@ class GoveeVmaCoordinator(DataUpdateCoordinator[dict[str, Any]]):
 
         return data
 
-    def _send_notification(self, data: dict[str, Any]) -> None:
-        """Send notification to home assistant."""
-        persistent_notification.create(self._hass, "Yay!", title="VMA API Response")
+    async def _process_vma_data(self, data: dict[str, Any]) -> None:
+        """Process VMA data and control lights."""
+        pattern = [
+            PatternStep(duration=3.0, power=True, rgb=(255, 0, 0), brightness=100),
+            PatternStep(duration=1.0, power=True, rgb=(0, 255, 0), brightness=30),
+            PatternStep(duration=5.0, power=True, rgb=(0, 0, 255), brightness=70),
+            PatternStep(duration=2.0, power=True, rgb=(255, 255, 255), brightness=100),
+        ]
+        await self.light_controller.run_pattern(pattern, loop=False)
+
+    async def _send_persistent_notification(
+        self, message: str, title: str = "Govee VMA Alert"
+    ) -> None:
+        """Send a persistent notification in Home Assistant."""
+        persistent_notification.async_create(
+            self._hass,
+            message,
+            title,
+            notification_id=DOMAIN,
+        )

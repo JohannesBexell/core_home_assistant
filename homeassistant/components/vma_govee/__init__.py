@@ -11,10 +11,12 @@ from homeassistant.core import HomeAssistant
 
 from .api import GoveeVmaApiClient
 from .coordinator import GoveeVmaConfigEntry, GoveeVmaCoordinator
+from .light_controller import GoveeLightProvider, LightController
+from .mock_govee_coordinator import MockGoveeCoordinator, MockGoveeDevice
 
 _LOGGER = logging.getLogger(__name__)
 
-PLATFORMS: list[Platform] = [Platform.SENSOR]
+PLATFORMS: list[Platform] = []
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: GoveeVmaConfigEntry) -> bool:
@@ -22,11 +24,17 @@ async def async_setup_entry(hass: HomeAssistant, entry: GoveeVmaConfigEntry) -> 
 
     api_client = GoveeVmaApiClient(hass)
 
+    govee_coordinator = MockGoveeCoordinator()
+    govee_provider = GoveeLightProvider(govee_coordinator)
+    light_controller = LightController(govee_provider, hass)
+    light_controller.register_device("TEST_DEVICE", MockGoveeDevice("TEST_DEVICE"))
+
     coordinator = GoveeVmaCoordinator(
         hass,
         entry,
         api_client,
-        update_interval=timedelta(seconds=30),
+        light_controller,
+        update_interval=timedelta(seconds=60),
     )
 
     await coordinator.async_config_entry_first_refresh()
