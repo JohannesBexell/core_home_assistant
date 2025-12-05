@@ -29,17 +29,19 @@ RUN \
 
 # Add go2rtc binary
 COPY --from=ghcr.io/alexxit/go2rtc:latest /usr/local/bin/go2rtc /bin/go2rtc
+   
 
 WORKDIR /usr/src
 
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
-
+ENV UV_PYTHON=python3.13
 RUN uv python install 3.13.2
 
 USER vscode
 ENV VIRTUAL_ENV="/home/vscode/.local/ha-venv"
 RUN uv venv $VIRTUAL_ENV
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
+ENV PYO3_USE_ABI3_FORWARD_COMPATIBILITY=1
 
 WORKDIR /tmp
 
