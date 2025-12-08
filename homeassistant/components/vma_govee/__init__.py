@@ -6,13 +6,13 @@ from datetime import timedelta
 import logging
 
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import Platform
+from homeassistant.const import CONF_API_KEY, Platform
 from homeassistant.core import HomeAssistant
 
 from .api import GoveeVmaApiClient
 from .coordinator import GoveeVmaConfigEntry, GoveeVmaCoordinator
+from .govee_coordinator import GoveeCoordinator
 from .light_controller import GoveeLightProvider, LightController
-from .mock_govee_coordinator import MockGoveeCoordinator, MockGoveeDevice
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -22,13 +22,27 @@ PLATFORMS: list[Platform] = []
 async def async_setup_entry(hass: HomeAssistant, entry: GoveeVmaConfigEntry) -> bool:
     """Set up Govee VMA from a config entry."""
 
+    api_key = entry.data.get(CONF_API_KEY, "")
+
+    # Initialize VMA API client (for VMA alerts)
     api_client = GoveeVmaApiClient(hass)
 
-    govee_coordinator = MockGoveeCoordinator()
+    # Initialize real Govee coordinator with API key
+    govee_coordinator = GoveeCoordinator(hass, api_key)
+
+    # Get Govee devices from API
+    govee_devices = await govee_coordinator.get_devices()
+
+    # Set up light provider and controller
     govee_provider = GoveeLightProvider(govee_coordinator)
     light_controller = LightController(govee_provider, hass)
-    light_controller.register_device("TEST_DEVICE", MockGoveeDevice("TEST_DEVICE"))
 
+    # Register all discovered Govee devices
+    for device in govee_devices:
+        light_controller.register_device(device.device_id, device)
+        _LOGGER.info("Registered Govee device: %s", device.name)
+
+    # Set up VMA coordinator
     coordinator = GoveeVmaCoordinator(
         hass,
         entry,

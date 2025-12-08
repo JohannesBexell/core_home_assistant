@@ -79,10 +79,14 @@ class GoveeVmaCoordinator(DataUpdateCoordinator[dict[str, Any]]):
     async def _process_vma_data(self, data: dict[str, Any]) -> None:
         """Process VMA data and control lights."""
         pattern = [
-            PatternStep(duration=3.0, power=True, rgb=(255, 0, 0), brightness=100),
-            PatternStep(duration=1.0, power=True, rgb=(0, 255, 0), brightness=30),
-            PatternStep(duration=5.0, power=True, rgb=(0, 0, 255), brightness=70),
-            PatternStep(duration=2.0, power=True, rgb=(255, 255, 255), brightness=100),
+            PatternStep(duration=0.5, rgb=(255, 0, 0)),
+            PatternStep(duration=0.5, brightness=100),
+            PatternStep(duration=0.5, brightness=1),
+            PatternStep(duration=0.5, brightness=100),
+            PatternStep(duration=0.5, brightness=1),
+            PatternStep(duration=0.5, brightness=100),
+            PatternStep(duration=0.5, brightness=1),
+            PatternStep(duration=0.5, power=False),
         ]
         await self.light_controller.run_pattern(pattern, loop=False)
 

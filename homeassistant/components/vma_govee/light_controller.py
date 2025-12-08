@@ -65,9 +65,9 @@ class GoveeLightProvider(LightProvider):
         await self._coordinator.turn_off(device)
 
     async def set_brightness(self, device: Any, brightness: int) -> None:
-        """Set light brightness (0-100)."""
-        if not 0 <= brightness <= 100:
-            raise ValueError(f"Brightness must be between 0 and 100, got {brightness}")
+        """Set light brightness (1-100, Govee API doesn't accept 0)."""
+        if not 1 <= brightness <= 100:
+            raise ValueError(f"Brightness must be between 1 and 100, got {brightness}")
         await self._coordinator.set_brightness(device, brightness)
 
     async def set_rgb_color(self, device: Any, red: int, green: int, blue: int) -> None:
@@ -89,13 +89,14 @@ class GoveeLightProvider(LightProvider):
 class PatternStep:
     """A single step in a light pattern.
 
-    Each step defines what the light should do and for how long.
+    Each step defines ONE action and how long to wait after executing it.
+    Only one of power, brightness, or rgb should be set per step.
     """
 
-    duration: float  # How long to stay in this state (seconds)
-    power: bool | None = None  # None = keep current
-    brightness: int | None = None  # 0-100, None=keep current
-    rgb: tuple[int, int, int] | None = None  # (red, green, blue), None=keep current
+    duration: float  # How long to wait after this action (seconds)
+    power: bool | None = None  # Turn on (True) or off (False)
+    brightness: int | None = None  # 1-100 (Govee API doesn't accept 0)
+    rgb: tuple[int, int, int] | None = None  # (red, green, blue)
 
 
 Pattern = list[PatternStep]
