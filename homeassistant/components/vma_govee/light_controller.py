@@ -8,10 +8,7 @@ from dataclasses import dataclass
 import logging
 from typing import Any
 
-import aiohttp
-
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -105,8 +102,6 @@ Pattern = list[PatternStep]
 class LightController:
     """Universal light controller that works with any provider."""
 
-    DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1439971478962573446/IykLFzmlKdoBRf1ZArHjZRTcXFOL7r2BQJYUnOJR-l21oNg9MR5sDav_wns1qb0Bm4rK"
-
     def __init__(self, provider: LightProvider, hass: HomeAssistant) -> None:
         """Initialize the light controller."""
         self._provider = provider
@@ -136,11 +131,8 @@ class LightController:
 
     async def turn_on(self) -> None:
         """Turn on all lights."""
-        for dev_id, device in self._devices.items():
+        for device in self._devices.values():
             await self._provider.turn_on(device)
-            await self._send_discord_notification(
-                {"device_id": dev_id, "action": "turn_on"}
-            )
 
     async def turn_off(self) -> None:
         """Turn off all lights."""
@@ -171,13 +163,24 @@ class LightController:
         device = self._devices[device_id]
         return await self._provider.get_state(device)
 
-    async def run_pattern(self, pattern: Pattern, loop: bool = True) -> None:
-        """Run a pattern on all lights."""
+    async def run_pattern(
+        self, pattern: Pattern, loop: bool = True, loop_count: int | None = None
+    ) -> None:
+        """Run a pattern on all lights.
+
+        Args:
+            pattern: The pattern to execute
+            loop: Whether to loop indefinitely (ignored if loop_count is set)
+            loop_count: Number of times to repeat the pattern (None = infinite if loop=True)
+        """
         # Stop any existing pattern
         await self.stop_pattern()
+        self._stop_pattern = False
 
         # Start new pattern
-        self._pattern_task = asyncio.create_task(self._execute_pattern(pattern, loop))
+        self._pattern_task = asyncio.create_task(
+            self._execute_pattern(pattern, loop, loop_count)
+        )
 
     async def stop_pattern(self) -> None:
         """Stop the currently running pattern."""
@@ -186,9 +189,18 @@ class LightController:
             self._pattern_task.cancel()
             self._pattern_task = None
 
-    async def _execute_pattern(self, pattern: Pattern, loop: bool) -> None:
-        """Execute a pattern."""
+    async def _execute_pattern(
+        self, pattern: Pattern, loop: bool, loop_count: int | None
+    ) -> None:
+        """Execute a pattern.
+
+        Args:
+            pattern: The pattern to execute
+            loop: Whether to loop indefinitely (ignored if loop_count is set)
+            loop_count: Number of times to repeat the pattern (None = infinite if loop=True)
+        """
         try:
+            iterations = 0
             while True:
                 for step in pattern:
                     if self._stop_pattern:
@@ -197,7 +209,13 @@ class LightController:
                     await self._apply_step_to_devices(step)
                     await asyncio.sleep(step.duration)
 
-                if not loop:
+                iterations += 1
+
+                # Check if we should stop based on loop_count or loop flag
+                if loop_count is not None:
+                    if iterations >= loop_count:
+                        break
+                elif not loop:
                     break
 
         except asyncio.CancelledError:
@@ -218,35 +236,3 @@ class LightController:
 
             if step.rgb is not None:
                 await self._provider.set_rgb_color(device, *step.rgb)
-
-            await self._send_discord_notification(
-                {
-                    "power": step.power,
-                    "brightness": step.brightness,
-                    "rgb": step.rgb,
-                    "duration": step.duration,
-                }
-            )
-
-    # TEMPORARY TESTING PURPOSES
-    async def _send_discord_notification(self, data: dict[str, Any]) -> None:
-        try:
-            session = async_get_clientsession(self._hass)
-
-            payload = {
-                "content": f"Light action performed: ```{data}```",
-            }
-
-            async with session.post(
-                self.DISCORD_WEBHOOK_URL,
-                json=payload,
-                timeout=aiohttp.ClientTimeout(total=10),
-            ) as response:
-                if response.status == 204:
-                    _LOGGER.debug("Successfully sent Discord notification")
-                else:
-                    _LOGGER.warning(
-                        "Discord webhook returned status %d", response.status
-                    )
-        except (TimeoutError, aiohttp.ClientError) as ex:
-            _LOGGER.error("Failed to send Discord notification: %s", ex)

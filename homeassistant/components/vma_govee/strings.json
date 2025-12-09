@@ -3,9 +3,14 @@
     "step": {
       "user": {
         "title": "Set up Govee VMA",
-        "description": "Enter your Govee API key to connect your Govee lights",
+        "description": "Enter your Govee API key to connect your Govee lights and optionally configure Discord notifications for VMA alerts",
         "data": {
-          "api_key": "Govee API key"
+          "api_key": "Govee API key",
+          "discord_webhook_url": "Discord webhook URL (optional)"
+        },
+        "data_description": {
+          "api_key": "Your Govee API key from the Govee Home app",
+          "discord_webhook_url": "Discord webhook URL to receive VMA alert notifications"
         }
       }
     },

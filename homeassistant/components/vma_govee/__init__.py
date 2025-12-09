@@ -10,6 +10,7 @@ from homeassistant.const import CONF_API_KEY, Platform
 from homeassistant.core import HomeAssistant
 
 from .api import GoveeVmaApiClient
+from .const import CONF_DISCORD_WEBHOOK_URL
 from .coordinator import GoveeVmaConfigEntry, GoveeVmaCoordinator
 from .govee_coordinator import GoveeCoordinator
 from .light_controller import GoveeLightProvider, LightController
@@ -23,6 +24,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: GoveeVmaConfigEntry) -> 
     """Set up Govee VMA from a config entry."""
 
     api_key = entry.data.get(CONF_API_KEY, "")
+    discord_webhook_url = entry.data.get(CONF_DISCORD_WEBHOOK_URL, "")
 
     # Initialize VMA API client (for VMA alerts)
     api_client = GoveeVmaApiClient(hass)
@@ -49,6 +51,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: GoveeVmaConfigEntry) -> 
         api_client,
         light_controller,
         update_interval=timedelta(seconds=60),
+        discord_webhook_url=discord_webhook_url,
     )
 
     await coordinator.async_config_entry_first_refresh()

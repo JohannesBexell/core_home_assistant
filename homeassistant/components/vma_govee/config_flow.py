@@ -9,7 +9,7 @@ import voluptuous as vol
 from homeassistant.config_entries import ConfigFlow, ConfigFlowResult
 from homeassistant.const import CONF_API_KEY
 
-from .const import DOMAIN
+from .const import CONF_DISCORD_WEBHOOK_URL, DOMAIN
 from .govee_coordinator import GoveeCoordinator
 
 
@@ -30,6 +30,7 @@ class GoveeVMAConfigFlow(ConfigFlow, domain=DOMAIN):
 
         if user_input is not None:
             api_key = user_input[CONF_API_KEY]
+            discord_webhook_url = user_input.get(CONF_DISCORD_WEBHOOK_URL, "")
 
             # Validate API key by trying to fetch devices
             try:
@@ -41,7 +42,10 @@ class GoveeVMAConfigFlow(ConfigFlow, domain=DOMAIN):
                 else:
                     return self.async_create_entry(
                         title="Govee VMA",
-                        data={CONF_API_KEY: api_key},
+                        data={
+                            CONF_API_KEY: api_key,
+                            CONF_DISCORD_WEBHOOK_URL: discord_webhook_url,
+                        },
                     )
             except Exception:  # noqa: BLE001
                 errors["base"] = "cannot_connect"
@@ -51,6 +55,7 @@ class GoveeVMAConfigFlow(ConfigFlow, domain=DOMAIN):
             data_schema=vol.Schema(
                 {
                     vol.Required(CONF_API_KEY): str,
+                    vol.Optional(CONF_DISCORD_WEBHOOK_URL, default=""): str,
                 }
             ),
             errors=errors,
