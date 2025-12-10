@@ -1,7 +1,7 @@
 """Tests for vma_govee light controller."""
 
 import asyncio
-from unittest.mock import AsyncMock, Mock, patch
+from unittest.mock import AsyncMock, Mock
 
 import pytest
 
@@ -36,10 +36,8 @@ async def test_pattern_execution_logic(hass: HomeAssistant) -> None:
         PatternStep(duration=0, power=False),
     ]
 
-    # mock discord notification
-    with patch.object(controller, "_send_discord_notification", new_callable=AsyncMock):
-        await controller.run_pattern(pattern, loop=False)
-        await controller._pattern_task
+    await controller.run_pattern(pattern, loop=False)
+    await controller._pattern_task
 
     # verification
     mock_provider.turn_on.assert_called_with(mock_device)
@@ -77,18 +75,17 @@ async def test_pattern_interruption(hass: HomeAssistant) -> None:
     pattern_1 = [PatternStep(duration=100, power=True)]
     pattern_2 = [PatternStep(duration=0, power=False)]
 
-    with patch.object(controller, "_send_discord_notification", new_callable=AsyncMock):
-        await controller.run_pattern(pattern_1, loop=True)
-        task_1 = controller._pattern_task
-        assert not task_1.done()
+    await controller.run_pattern(pattern_1, loop=True)
+    task_1 = controller._pattern_task
+    assert not task_1.done()
 
-        await controller.run_pattern(pattern_2, loop=False)
-        task_2 = controller._pattern_task
+    await controller.run_pattern(pattern_2, loop=False)
+    task_2 = controller._pattern_task
 
-        await asyncio.sleep(0)
-        assert task_1.cancelled() or task_1.done()
-        assert task_2 is not task_1
+    await asyncio.sleep(0)
+    assert task_1.cancelled() or task_1.done()
+    assert task_2 is not task_1
 
-        await task_2
+    await task_2
 
     mock_provider.turn_off.assert_called()

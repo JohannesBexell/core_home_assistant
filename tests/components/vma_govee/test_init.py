@@ -1,6 +1,6 @@
 """Tests for vma_govee integration setup."""
 
-from unittest.mock import AsyncMock, patch
+from unittest.mock import patch
 
 from homeassistant.config_entries import ConfigEntryState
 from homeassistant.core import HomeAssistant
@@ -21,10 +21,6 @@ async def test_load_unload_entry(
         patch(
             "homeassistant.components.vma_govee.GoveeVmaApiClient",
             return_value=mock_vma_api_client,
-        ),
-        patch(
-            "homeassistant.components.vma_govee.light_controller.LightController._send_discord_notification",
-            new_callable=AsyncMock,
         ),
     ):
         await hass.config_entries.async_setup(mock_config_entry.entry_id)
